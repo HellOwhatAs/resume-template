@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>本科生个人小简历</title>
+  <style>
+    :root {
+      --ink: #172033;
+      --muted: #667085;
+      --line: #cfd5df;
+      --soft: #f7f8fa;
+      --page-w: 210mm;
+      --page-h: 297mm;
+      --page-pad-x: 16mm;
+      --page-pad-y: 15mm;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 18px;
+      background: #eef1f5;
+      color: var(--ink);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans SC",
+        "Microsoft YaHei", Arial, sans-serif;
+      font-size: 15px;
+      line-height: 1.42;
+    }
+
+    .toolbar {
+      width: var(--page-w);
+      max-width: 100%;
+      margin: 0 auto 12px;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .toolbar .buttons {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: inherit;
+      font-size: 14px;
+      border: 1px solid #c8ced8;
+      border-radius: 8px;
+      background: #fff;
+      color: #1f2937;
+      padding: 7px 11px;
+      cursor: pointer;
+    }
+
+    button:hover { background: #f3f4f6; }
+
+    .toolbar-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .page {
+      width: var(--page-w);
+      min-height: var(--page-h);
+      margin: 0 auto;
+      padding: var(--page-pad-y) var(--page-pad-x);
+      background: white;
+      box-shadow: 0 10px 28px rgba(15, 23, 42, 0.15);
+      overflow: visible;
+    }
+
+    .resume-title {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 29px;
+      line-height: 1.2;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 0 0 14px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .section { margin-top: 10px; }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 6px;
+      font-size: 17px;
+      line-height: 1.25;
+      font-weight: 800;
+    }
+
+    .section-title::before {
+      content: "";
+      width: 5px;
+      height: 18px;
+      border-radius: 99px;
+      background: #3c4658;
+      flex: 0 0 auto;
+    }
+
+    .screen-note {
+      margin: -2px 0 6px;
+      color: var(--muted);
+      font-size: 12.5px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      border: 1px solid var(--line);
+      font-size: 14.5px;
+    }
+
+    col {
+      transition: width 0.15s ease;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line);
+      padding: 7px 8px;
+      min-height: 34px;
+      text-align: left;
+      vertical-align: top;
+      outline: none;
+    }
+
+    th {
+      background: var(--soft);
+      font-weight: 750;
+    }
+
+    .basic-table th {
+      width: 13.5%;
+      white-space: nowrap;
+    }
+
+    .basic-table td {
+      width: 36.5%;
+    }
+
+    td[contenteditable="true"],
+    .box[contenteditable="true"] {
+      cursor: text;
+    }
+
+    td[contenteditable="true"]:empty::before,
+    .box[contenteditable="true"]:empty::before {
+      content: attr(data-placeholder);
+      color: #98a2b3;
+    }
+
+    .table-block {
+      position: relative;
+      overflow: visible;
+    }
+
+    .table-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-top: 5px;
+    }
+
+    .mini {
+      padding: 3px 8px;
+      font-size: 12.5px;
+      border-radius: 7px;
+    }
+
+    .row-delete {
+      position: absolute;
+      right: -34px;
+      width: 25px;
+      height: 25px;
+      padding: 0;
+      border-radius: 999px;
+      font-size: 14px;
+      line-height: 22px;
+      text-align: center;
+      background: #fff;
+      z-index: 3;
+    }
+
+    .two-boxes {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .box {
+      border: 1px solid var(--line);
+      min-height: 58px;
+      padding: 7px 8px;
+      outline: none;
+    }
+
+    .box-label {
+      font-weight: 750;
+      color: #2e3748;
+      margin-bottom: 4px;
+    }
+
+    .tall-box {
+      min-height: 56px;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      html,
+      body {
+        width: 210mm;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+      }
+
+      .toolbar,
+      .table-actions,
+      .row-delete,
+      .screen-note {
+        display: none !important;
+      }
+
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+        padding: var(--page-pad-y) var(--page-pad-x);
+        box-shadow: none;
+        background: white;
+      }
+
+      body {
+        color: var(--ink);
+        font-size: 15px;
+        line-height: 1.42;
+      }
+
+      .resume-title {
+        font-size: 29px;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        font-size: 14px;
+        margin-bottom: 14px;
+      }
+
+      .section {
+        margin-top: 10px;
+        break-inside: avoid;
+      }
+
+      .section-title {
+        font-size: 17px;
+        margin-bottom: 6px;
+      }
+
+      table {
+        width: 100%;
+        font-size: 14.5px;
+      }
+
+      th,
+      td {
+        padding: 7px 8px;
+      }
+
+      td[contenteditable="true"]:empty::before,
+      .box[contenteditable="true"]:empty::before {
+        content: "";
+      }
+
+      tr.empty-print-row {
+        display: none !important;
+      }
+    }
+
+    @media screen and (max-width: 860px) {
+      body { padding: 10px; }
+
+      .toolbar,
+      .page {
+        width: 100%;
+      }
+
+      .page {
+        min-height: auto;
+        padding: 18px;
+      }
+
+      .basic-table,
+      .basic-table tbody,
+      .basic-table tr,
+      .basic-table th,
+      .basic-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .basic-table tr {
+        display: grid;
+        grid-template-columns: 90px 1fr;
+      }
+
+      .basic-table th,
+      .basic-table td {
+        width: auto;
+      }
+
+      .two-boxes {
+        grid-template-columns: 1fr;
+      }
+
+      .row-delete {
+        right: -6px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <div class="buttons">
+      <button type="button" onclick="window.print()">打印 / 另存为 PDF</button>
+      <button type="button" onclick="downloadCurrentHtml()">下载当前填写版 HTML</button>
+      <button type="button" onclick="clearSavedData()">清空本机保存</button>
+    </div>
+    <div class="toolbar-note">点击灰色提示处即可填写；打印时按钮和提示会隐藏。</div>
+  </div>
+
+  <main class="page" id="page">
+    <h1 class="resume-title">本科生个人小简历</h1>
+    <p class="subtitle">用于导师快速了解个人基础、近期学习情况与项目参与状态</p>
+
+    <section class="section">
+      <h2 class="section-title">基本信息</h2>
+      <table class="basic-table">
+        <tbody>
+          <tr>
+            <th>姓名</th>
+            <td contenteditable="true" data-placeholder="例如：张三"></td>
+            <th>专业年级</th>
+            <td contenteditable="true" data-placeholder="例如：计算机类 2024 级"></td>
+          </tr>
+          <tr>
+            <th>邮箱</th>
+            <td contenteditable="true" data-placeholder="常用邮箱"></td>
+            <th>联系方式</th>
+            <td contenteditable="true" data-placeholder="手机号或微信，可选"></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">教育背景</h2>
+      <div class="table-block" data-table-block="education">
+        <table data-table="education">
+          <colgroup>
+            <col style="width: 24%">
+            <col style="width: 22%">
+            <col style="width: 40%">
+            <col style="width: 14%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>学校 / 学院</th>
+              <th>专业 / 年级</th>
+              <th>相关课程</th>
+              <th>成绩 / 排名<br>可选</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td contenteditable="true" data-placeholder="例如：XX大学 / XX学院"></td>
+              <td contenteditable="true" data-placeholder="例如：计算机科学与技术 2024级"></td>
+              <td contenteditable="true" data-placeholder="例如：程序设计、高数、线代、离散数学等"></td>
+              <td contenteditable="true" data-placeholder="可不填"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-actions">
+          <button class="mini" type="button" onclick="addRow('education')">＋行</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">技能基础</h2>
+      <p class="screen-note">建议写真实程度：会用 / 了解 / 正在学。不要写“精通”。</p>
+      <div class="table-block" data-table-block="skills">
+        <table data-table="skills">
+          <colgroup>
+            <col style="width: 22%">
+            <col style="width: 40%">
+            <col style="width: 38%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>类别</th>
+              <th>目前掌握情况</th>
+              <th>可以举出的例子</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td contenteditable="true" data-placeholder="例如：C / Python / Git / Linux"></td>
+              <td contenteditable="true" data-placeholder="例如：能看懂基础语法，能完成简单作业"></td>
+              <td contenteditable="true" data-placeholder="例如：写过简单枚举程序、处理过文本数据"></td>
+            </tr>
+            <tr>
+              <td contenteditable="true" data-placeholder="例如：算法基础"></td>
+              <td contenteditable="true" data-placeholder="例如：了解排序、枚举、递归等基本思想"></td>
+              <td contenteditable="true" data-placeholder="例如：完成过课程作业或小练习"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-actions">
+          <button class="mini" type="button" onclick="addRow('skills')">＋行</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">课程作业 / 小项目 / 作品</h2>
+      <p class="screen-note">没有竞赛和实习也没关系，可以写课程大作业、自学练习、小工具、读书笔记等。</p>
+      <div class="table-block" data-table-block="works">
+        <table data-table="works">
+          <colgroup>
+            <col style="width: 23%">
+            <col style="width: 17%">
+            <col style="width: 34%">
+            <col style="width: 26%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>名称</th>
+              <th>时间</th>
+              <th>做了什么</th>
+              <th>收获 / 结果</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td contenteditable="true" data-placeholder="例如：C语言课程作业"></td>
+              <td contenteditable="true" data-placeholder="例如：2025.03"></td>
+              <td contenteditable="true" data-placeholder="说明自己实际完成的部分"></td>
+              <td contenteditable="true" data-placeholder="例如：熟悉了调试、函数拆分等"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-actions">
+          <button class="mini" type="button" onclick="addRow('works')">＋行</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">PRP 项目参与情况</h2>
+      <p class="screen-note">按真实情况写：最近做了什么、自己理解了什么、还有什么没搞懂。</p>
+      <div class="table-block" data-table-block="prp">
+        <table data-table="prp">
+          <colgroup>
+            <col style="width: 24%">
+            <col style="width: 40%">
+            <col style="width: 36%">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>项目 / 任务</th>
+              <th>自己实际做过的事</th>
+              <th>目前的理解或问题</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td contenteditable="true" data-placeholder="例如：第一次 TSP 入门作业"></td>
+              <td contenteditable="true" data-placeholder="例如：看题、尝试枚举路径、阅读/修改代码、整理结果"></td>
+              <td contenteditable="true" data-placeholder="例如：理解了部分思路；仍不清楚证明或代码细节"></td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="table-actions">
+          <button class="mini" type="button" onclick="addRow('prp')">＋行</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">近期学习情况与计划</h2>
+      <div class="two-boxes">
+        <div class="box" contenteditable="true" data-placeholder="最近在学：例如 Python 基础、数据结构、Git、数学证明表达等">
+          <div class="box-label">最近在学</div>
+        </div>
+        <div class="box" contenteditable="true" data-placeholder="接下来想提升：例如独立写代码、把思路讲清楚、减少依赖 AI 直接生成答案等">
+          <div class="box-label">接下来想提升</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2 class="section-title">希望老师了解 / 指导的问题</h2>
+      <div class="box tall-box" contenteditable="true" data-placeholder="可以写 1—3 点：比如目前最大的困难、想请教的问题、希望在项目中承担的任务。"></div>
+    </section>
+  </main>
+
+  <script>
+    const STORAGE_KEY = "personal_resume_reprint_fixed_v1";
+
+
+    const WIDTH_CONFIG = {
+      education: {
+        defaults: [24, 22, 40, 14],
+        min: [16, 16, 26, 10],
+        max: [34, 32, 56, 22]
+      },
+      skills: {
+        defaults: [22, 40, 38],
+        min: [16, 28, 28],
+        max: [34, 54, 54]
+      },
+      works: {
+        defaults: [23, 17, 34, 26],
+        min: [16, 12, 27, 20],
+        max: [34, 25, 50, 42]
+      },
+      prp: {
+        defaults: [24, 40, 36],
+        min: [18, 30, 28],
+        max: [36, 52, 50]
+      }
+    };
+
+    function visualLength(text) {
+      return Array.from((text || "").trim()).reduce((sum, ch) => {
+        if (/\s/.test(ch)) return sum + 0.25;
+        if (/[\u4e00-\u9fff]/.test(ch)) return sum + 2;
+        if (/[A-Z0-9]/.test(ch)) return sum + 1.15;
+        if (/[a-z]/.test(ch)) return sum + 0.9;
+        return sum + 1;
+      }, 0);
+    }
+
+    function cellContentText(cell) {
+      const text = cell.textContent.trim();
+      // 空单元格不使用 placeholder 参与列宽计算，避免未填写时被提示文字撑宽。
+      return text;
+    }
+
+    function normalizeWithBounds(values, mins, maxs) {
+      const n = values.length;
+      const result = new Array(n).fill(null);
+      const remaining = new Set(values.map((_, i) => i));
+      let remainingTotal = 100;
+
+      for (let guard = 0; guard < 12 && remaining.size > 0; guard++) {
+        const sum = Array.from(remaining).reduce((acc, i) => acc + values[i], 0) || 1;
+        let changed = false;
+
+        for (const i of Array.from(remaining)) {
+          const pct = values[i] / sum * remainingTotal;
+          if (pct < mins[i]) {
+            result[i] = mins[i];
+            remaining.delete(i);
+            remainingTotal -= mins[i];
+            changed = true;
+          } else if (pct > maxs[i]) {
+            result[i] = maxs[i];
+            remaining.delete(i);
+            remainingTotal -= maxs[i];
+            changed = true;
+          }
+        }
+
+        if (!changed) {
+          for (const i of remaining) {
+            result[i] = values[i] / sum * remainingTotal;
+          }
+          break;
+        }
+      }
+
+      const filledTotal = result.reduce((acc, v) => acc + (v || 0), 0);
+      if (Math.abs(filledTotal - 100) > 0.01) {
+        const adjustable = result
+          .map((v, i) => ({ v, i }))
+          .filter(({ v, i }) => v > mins[i] && v < maxs[i]);
+
+        if (adjustable.length > 0) {
+          const delta = (100 - filledTotal) / adjustable.length;
+          adjustable.forEach(({ i }) => result[i] += delta);
+        }
+      }
+
+      return result.map(v => Math.max(0, v));
+    }
+
+    function autoFitTable(name) {
+      const table = document.querySelector(`table[data-table="${name}"]`);
+      const config = WIDTH_CONFIG[name];
+      if (!table || !config) return;
+
+      const cols = Array.from(table.querySelectorAll("colgroup col"));
+      if (!cols.length) return;
+
+      const scores = config.defaults.map(v => v);
+
+      cols.forEach((_, colIndex) => {
+        let maxActual = 0;
+        let totalActual = 0;
+
+        table.querySelectorAll("thead tr").forEach(row => {
+          const cell = row.children[colIndex];
+          if (cell) {
+            scores[colIndex] += visualLength(cell.textContent) * 0.22;
+          }
+        });
+
+        table.querySelectorAll("tbody tr").forEach(row => {
+          const cell = row.children[colIndex];
+          if (!cell) return;
+          const text = cellContentText(cell);
+          if (!text) return;
+
+          const len = visualLength(text);
+          maxActual = Math.max(maxActual, len);
+          totalActual += len;
+        });
+
+        // 最大内容决定主要宽度，累计内容提供轻微加权；都有上限，避免一列过度膨胀。
+        scores[colIndex] += Math.min(34, maxActual / 2.6);
+        scores[colIndex] += Math.min(10, totalActual / 28);
+      });
+
+      const widths = normalizeWithBounds(scores, config.min, config.max);
+      cols.forEach((col, i) => {
+        col.style.width = widths[i].toFixed(2) + "%";
+      });
+    }
+
+    function autoFitAllTables() {
+      Object.keys(WIDTH_CONFIG).forEach(autoFitTable);
+      requestAnimationFrame(renderRowDeleteButtons);
+    }
+
+    function tableByName(name) {
+      return document.querySelector(`table[data-table="${name}"]`);
+    }
+
+    function addRow(name) {
+      const tbody = tableByName(name).querySelector("tbody");
+      const template = tbody.querySelector("tr");
+      const row = template.cloneNode(true);
+      row.querySelectorAll("[contenteditable='true']").forEach(cell => {
+        cell.innerHTML = "";
+      });
+      tbody.appendChild(row);
+      autoFitAllTables();
+      saveData();
+    }
+
+    function removeRow(row) {
+      const tbody = row.parentElement;
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+      if (rows.length <= 1) {
+        row.querySelectorAll("[contenteditable='true']").forEach(cell => cell.innerHTML = "");
+      } else {
+        row.remove();
+      }
+      autoFitAllTables();
+      saveData();
+    }
+
+    function renderRowDeleteButtons() {
+      document.querySelectorAll(".row-delete").forEach(btn => btn.remove());
+
+      document.querySelectorAll(".table-block").forEach(block => {
+        const rows = block.querySelectorAll("tbody tr");
+        rows.forEach(row => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "row-delete";
+          btn.textContent = "×";
+          btn.title = "删除这一行";
+          btn.addEventListener("click", () => removeRow(row));
+
+          block.appendChild(btn);
+
+          const blockRect = block.getBoundingClientRect();
+          const rowRect = row.getBoundingClientRect();
+          const top = rowRect.top - blockRect.top + rowRect.height / 2 - 12.5;
+          btn.style.top = `${top}px`;
+        });
+      });
+    }
+
+    function isDataRowEmpty(row) {
+      const editableCells = row.querySelectorAll("[contenteditable='true']");
+      return Array.from(editableCells).every(cell => cell.textContent.trim() === "");
+    }
+
+    function markEmptyRowsForPrint() {
+      document.querySelectorAll("tbody tr").forEach(row => {
+        row.classList.toggle("empty-print-row", isDataRowEmpty(row));
+      });
+    }
+
+    function getEditableElements() {
+      return Array.from(document.querySelectorAll("[contenteditable='true']"));
+    }
+
+    function saveData() {
+      const payload = getEditableElements().map(el => el.innerHTML);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+    }
+
+    function loadData() {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return;
+
+      try {
+        const payload = JSON.parse(raw);
+        getEditableElements().forEach((el, index) => {
+          if (payload[index] !== undefined) el.innerHTML = payload[index];
+        });
+      } catch (e) {
+        console.warn("读取本机保存失败", e);
+      }
+    }
+
+    function clearSavedData() {
+      if (!confirm("确定清空本机保存的填写内容吗？当前页面文字也会清空。")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      getEditableElements().forEach(el => {
+        if (el.querySelector(".box-label")) {
+          const label = el.querySelector(".box-label").outerHTML;
+          el.innerHTML = label;
+        } else {
+          el.innerHTML = "";
+        }
+      });
+      autoFitAllTables();
+    }
+
+    function downloadCurrentHtml() {
+      saveData();
+      const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "本科生个人小简历_已填写.html";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    document.addEventListener("input", event => {
+      if (event.target.matches("[contenteditable='true']")) {
+        saveData();
+        autoFitAllTables();
+      }
+    });
+
+    window.addEventListener("resize", renderRowDeleteButtons);
+    window.addEventListener("beforeprint", () => {
+      autoFitAllTables();
+      markEmptyRowsForPrint();
+    });
+    window.addEventListener("afterprint", () => {
+      document.querySelectorAll(".empty-print-row").forEach(row => row.classList.remove("empty-print-row"));
+      renderRowDeleteButtons();
+    });
+
+    loadData();
+    autoFitAllTables();
+  </script>
+</body>
+</html>
