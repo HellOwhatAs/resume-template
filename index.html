@@ -381,25 +381,25 @@
       <div class="table-block" data-table-block="education">
         <table data-table="education">
           <colgroup>
+            <col style="width: 14%">
             <col style="width: 24%">
             <col style="width: 22%">
             <col style="width: 40%">
-            <col style="width: 14%">
           </colgroup>
           <thead>
             <tr>
+              <th>学历</th>
               <th>学校 / 学院</th>
               <th>专业 / 年级</th>
               <th>相关课程</th>
-              <th>成绩 / 排名<br>可选</th>
             </tr>
           </thead>
           <tbody>
             <tr>
+              <td contenteditable="true" data-placeholder="本科"></td>
               <td contenteditable="true" data-placeholder="例如：XX大学 / XX学院"></td>
               <td contenteditable="true" data-placeholder="例如：计算机科学与技术 2024级"></td>
               <td contenteditable="true" data-placeholder="例如：程序设计、高数、线代、离散数学等"></td>
-              <td contenteditable="true" data-placeholder="可不填"></td>
             </tr>
           </tbody>
         </table>
@@ -446,8 +446,8 @@
     </section>
 
     <section class="section">
-      <h2 class="section-title">课程作业 / 小项目 / 作品</h2>
-      <p class="screen-note">没有竞赛和实习也没关系，可以写课程大作业、自学练习、小工具、读书笔记等。</p>
+      <h2 class="section-title">项目 / 比赛 / 作业 / 作品</h2>
+      <p class="screen-note">可以写课程大作业、自学练习、小工具、读书笔记等。</p>
       <div class="table-block" data-table-block="works">
         <table data-table="works">
           <colgroup>
@@ -529,35 +529,15 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "personal_resume_reprint_fixed_v1";
+    const STORAGE_KEY = "personal_resume_reprint_fixed_v2";
 
+    function tableByName(name) {
+      return document.querySelector(`table[data-table="${name}"]`);
+    }
 
-    const WIDTH_CONFIG = {
-      education: {
-        defaults: [24, 22, 40, 14],
-        min: [16, 16, 26, 10],
-        max: [34, 32, 56, 22]
-      },
-      skills: {
-        defaults: [22, 40, 38],
-        min: [16, 28, 28],
-        max: [34, 54, 54]
-      },
-      works: {
-        defaults: [23, 17, 34, 26],
-        min: [16, 12, 27, 20],
-        max: [34, 25, 50, 42]
-      },
-      prp: {
-        defaults: [24, 40, 36],
-        min: [18, 30, 28],
-        max: [36, 52, 50]
-      }
-    };
-
-    function visualLength(text) {
+    function textWeight(text) {
       return Array.from((text || "").trim()).reduce((sum, ch) => {
-        if (/\s/.test(ch)) return sum + 0.25;
+        if (/\s/.test(ch)) return sum + 0.35;
         if (/[\u4e00-\u9fff]/.test(ch)) return sum + 2;
         if (/[A-Z0-9]/.test(ch)) return sum + 1.15;
         if (/[a-z]/.test(ch)) return sum + 0.9;
@@ -565,110 +545,54 @@
       }, 0);
     }
 
-    function cellContentText(cell) {
-      const text = cell.textContent.trim();
-      // 空单元格不使用 placeholder 参与列宽计算，避免未填写时被提示文字撑宽。
-      return text;
+    function visibleTextForWidth(cell) {
+      const actual = cell.textContent.trim();
+      if (actual) return actual;
+
+      // 未填写时，允许使用表头和灰色 placeholder 参与默认排版；
+      // 一旦填写内容后，列宽就只由真实填写内容和表头决定。
+      return cell.getAttribute("data-placeholder") || "";
     }
 
-    function normalizeWithBounds(values, mins, maxs) {
-      const n = values.length;
-      const result = new Array(n).fill(null);
-      const remaining = new Set(values.map((_, i) => i));
-      let remainingTotal = 100;
-
-      for (let guard = 0; guard < 12 && remaining.size > 0; guard++) {
-        const sum = Array.from(remaining).reduce((acc, i) => acc + values[i], 0) || 1;
-        let changed = false;
-
-        for (const i of Array.from(remaining)) {
-          const pct = values[i] / sum * remainingTotal;
-          if (pct < mins[i]) {
-            result[i] = mins[i];
-            remaining.delete(i);
-            remainingTotal -= mins[i];
-            changed = true;
-          } else if (pct > maxs[i]) {
-            result[i] = maxs[i];
-            remaining.delete(i);
-            remainingTotal -= maxs[i];
-            changed = true;
-          }
-        }
-
-        if (!changed) {
-          for (const i of remaining) {
-            result[i] = values[i] / sum * remainingTotal;
-          }
-          break;
-        }
-      }
-
-      const filledTotal = result.reduce((acc, v) => acc + (v || 0), 0);
-      if (Math.abs(filledTotal - 100) > 0.01) {
-        const adjustable = result
-          .map((v, i) => ({ v, i }))
-          .filter(({ v, i }) => v > mins[i] && v < maxs[i]);
-
-        if (adjustable.length > 0) {
-          const delta = (100 - filledTotal) / adjustable.length;
-          adjustable.forEach(({ i }) => result[i] += delta);
-        }
-      }
-
-      return result.map(v => Math.max(0, v));
-    }
-
-    function autoFitTable(name) {
-      const table = document.querySelector(`table[data-table="${name}"]`);
-      const config = WIDTH_CONFIG[name];
-      if (!table || !config) return;
-
+    function autoFitTable(table) {
       const cols = Array.from(table.querySelectorAll("colgroup col"));
       if (!cols.length) return;
 
-      const scores = config.defaults.map(v => v);
+      const colCount = cols.length;
+      const scores = new Array(colCount).fill(0);
 
-      cols.forEach((_, colIndex) => {
-        let maxActual = 0;
-        let totalActual = 0;
+      for (let colIndex = 0; colIndex < colCount; colIndex++) {
+        const candidates = [];
 
         table.querySelectorAll("thead tr").forEach(row => {
           const cell = row.children[colIndex];
-          if (cell) {
-            scores[colIndex] += visualLength(cell.textContent) * 0.22;
-          }
+          if (cell) candidates.push(cell.textContent.trim());
         });
 
         table.querySelectorAll("tbody tr").forEach(row => {
+          if (row.classList.contains("empty-print-row")) return;
           const cell = row.children[colIndex];
-          if (!cell) return;
-          const text = cellContentText(cell);
-          if (!text) return;
-
-          const len = visualLength(text);
-          maxActual = Math.max(maxActual, len);
-          totalActual += len;
+          if (cell) candidates.push(visibleTextForWidth(cell));
         });
 
-        // 最大内容决定主要宽度，累计内容提供轻微加权；都有上限，避免一列过度膨胀。
-        scores[colIndex] += Math.min(34, maxActual / 2.6);
-        scores[colIndex] += Math.min(10, totalActual / 28);
-      });
+        const maxLen = Math.max(1, ...candidates.map(textWeight));
+        const avgLen =
+          candidates.reduce((sum, text) => sum + textWeight(text), 0) /
+          Math.max(1, candidates.length);
 
-      const widths = normalizeWithBounds(scores, config.min, config.max);
-      cols.forEach((col, i) => {
-        col.style.width = widths[i].toFixed(2) + "%";
+        // 完全由当前表格文本计算：最长内容为主，平均内容为辅。
+        scores[colIndex] = maxLen * 1.0 + avgLen * 0.35;
+      }
+
+      const total = scores.reduce((sum, score) => sum + score, 0) || 1;
+      cols.forEach((col, index) => {
+        col.style.width = `${(scores[index] / total * 100).toFixed(2)}%`;
       });
     }
 
     function autoFitAllTables() {
-      Object.keys(WIDTH_CONFIG).forEach(autoFitTable);
+      document.querySelectorAll("table[data-table]").forEach(autoFitTable);
       requestAnimationFrame(renderRowDeleteButtons);
-    }
-
-    function tableByName(name) {
-      return document.querySelector(`table[data-table="${name}"]`);
     }
 
     function addRow(name) {
@@ -773,7 +697,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "个人简历_已填写.html";
+      a.download = "本科生个人小简历_已填写.html";
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -789,12 +713,12 @@
 
     window.addEventListener("resize", renderRowDeleteButtons);
     window.addEventListener("beforeprint", () => {
-      autoFitAllTables();
       markEmptyRowsForPrint();
+      autoFitAllTables();
     });
     window.addEventListener("afterprint", () => {
       document.querySelectorAll(".empty-print-row").forEach(row => row.classList.remove("empty-print-row"));
-      renderRowDeleteButtons();
+      autoFitAllTables();
     });
 
     loadData();
