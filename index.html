@@ -529,128 +529,65 @@
   </main>
 
   <script>
-    const STORAGE_KEY = "personal_resume_reprint_fixed_v2";
+    const STORAGE_KEY = "personal_resume_manual_resize_data_v3";
+    const WIDTH_KEY = "personal_resume_manual_resize_widths_v3";
+
+    let dragState = null;
+    let rafPending = false;
+
+    function installResizeHandleStyle() {
+      if (document.getElementById("manual-resize-style")) return;
+
+      const style = document.createElement("style");
+      style.id = "manual-resize-style";
+      style.textContent = `
+        col {
+          transition: none !important;
+        }
+
+        .col-resize-handle {
+          position: absolute;
+          top: 0;
+          width: 14px;
+          cursor: col-resize;
+          z-index: 4;
+          transform: translateX(-7px);
+          user-select: none;
+          touch-action: none;
+        }
+
+        .col-resize-handle::after {
+          content: "";
+          position: absolute;
+          left: 6px;
+          top: 0;
+          width: 2px;
+          height: 100%;
+          background: transparent;
+        }
+
+        .col-resize-handle:hover::after,
+        body.resizing-columns .col-resize-handle.active::after {
+          background: #9ca3af;
+        }
+
+        body.resizing-columns,
+        body.resizing-columns * {
+          cursor: col-resize !important;
+          user-select: none !important;
+        }
+
+        @media print {
+          .col-resize-handle {
+            display: none !important;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
 
     function tableByName(name) {
       return document.querySelector(`table[data-table="${name}"]`);
-    }
-
-    function textWeight(text) {
-      return Array.from((text || "").trim()).reduce((sum, ch) => {
-        if (/\s/.test(ch)) return sum + 0.35;
-        if (/[\u4e00-\u9fff]/.test(ch)) return sum + 2;
-        if (/[A-Z0-9]/.test(ch)) return sum + 1.15;
-        if (/[a-z]/.test(ch)) return sum + 0.9;
-        return sum + 1;
-      }, 0);
-    }
-
-    function visibleTextForWidth(cell) {
-      const actual = cell.textContent.trim();
-      if (actual) return actual;
-
-      // 未填写时，允许使用表头和灰色 placeholder 参与默认排版；
-      // 一旦填写内容后，列宽就只由真实填写内容和表头决定。
-      return cell.getAttribute("data-placeholder") || "";
-    }
-
-    function autoFitTable(table) {
-      const cols = Array.from(table.querySelectorAll("colgroup col"));
-      if (!cols.length) return;
-
-      const colCount = cols.length;
-      const scores = new Array(colCount).fill(0);
-
-      for (let colIndex = 0; colIndex < colCount; colIndex++) {
-        const candidates = [];
-
-        table.querySelectorAll("thead tr").forEach(row => {
-          const cell = row.children[colIndex];
-          if (cell) candidates.push(cell.textContent.trim());
-        });
-
-        table.querySelectorAll("tbody tr").forEach(row => {
-          if (row.classList.contains("empty-print-row")) return;
-          const cell = row.children[colIndex];
-          if (cell) candidates.push(visibleTextForWidth(cell));
-        });
-
-        const maxLen = Math.max(1, ...candidates.map(textWeight));
-        const avgLen =
-          candidates.reduce((sum, text) => sum + textWeight(text), 0) /
-          Math.max(1, candidates.length);
-
-        // 完全由当前表格文本计算：最长内容为主，平均内容为辅。
-        scores[colIndex] = maxLen * 1.0 + avgLen * 0.35;
-      }
-
-      const total = scores.reduce((sum, score) => sum + score, 0) || 1;
-      cols.forEach((col, index) => {
-        col.style.width = `${(scores[index] / total * 100).toFixed(2)}%`;
-      });
-    }
-
-    function autoFitAllTables() {
-      document.querySelectorAll("table[data-table]").forEach(autoFitTable);
-      requestAnimationFrame(renderRowDeleteButtons);
-    }
-
-    function addRow(name) {
-      const tbody = tableByName(name).querySelector("tbody");
-      const template = tbody.querySelector("tr");
-      const row = template.cloneNode(true);
-      row.querySelectorAll("[contenteditable='true']").forEach(cell => {
-        cell.innerHTML = "";
-      });
-      tbody.appendChild(row);
-      autoFitAllTables();
-      saveData();
-    }
-
-    function removeRow(row) {
-      const tbody = row.parentElement;
-      const rows = Array.from(tbody.querySelectorAll("tr"));
-      if (rows.length <= 1) {
-        row.querySelectorAll("[contenteditable='true']").forEach(cell => cell.innerHTML = "");
-      } else {
-        row.remove();
-      }
-      autoFitAllTables();
-      saveData();
-    }
-
-    function renderRowDeleteButtons() {
-      document.querySelectorAll(".row-delete").forEach(btn => btn.remove());
-
-      document.querySelectorAll(".table-block").forEach(block => {
-        const rows = block.querySelectorAll("tbody tr");
-        rows.forEach(row => {
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = "row-delete";
-          btn.textContent = "×";
-          btn.title = "删除这一行";
-          btn.addEventListener("click", () => removeRow(row));
-
-          block.appendChild(btn);
-
-          const blockRect = block.getBoundingClientRect();
-          const rowRect = row.getBoundingClientRect();
-          const top = rowRect.top - blockRect.top + rowRect.height / 2 - 12.5;
-          btn.style.top = `${top}px`;
-        });
-      });
-    }
-
-    function isDataRowEmpty(row) {
-      const editableCells = row.querySelectorAll("[contenteditable='true']");
-      return Array.from(editableCells).every(cell => cell.textContent.trim() === "");
-    }
-
-    function markEmptyRowsForPrint() {
-      document.querySelectorAll("tbody tr").forEach(row => {
-        row.classList.toggle("empty-print-row", isDataRowEmpty(row));
-      });
     }
 
     function getEditableElements() {
@@ -676,9 +613,311 @@
       }
     }
 
+    function saveWidths() {
+      const payload = {};
+
+      document.querySelectorAll("table[data-table]").forEach(table => {
+        const cols = Array.from(table.querySelectorAll("colgroup col"));
+        payload[table.dataset.table] = cols.map(col => col.style.width || "");
+      });
+
+      localStorage.setItem(WIDTH_KEY, JSON.stringify(payload));
+    }
+
+    function loadWidths() {
+      const raw = localStorage.getItem(WIDTH_KEY);
+      if (!raw) return;
+
+      try {
+        const payload = JSON.parse(raw);
+
+        document.querySelectorAll("table[data-table]").forEach(table => {
+          const saved = payload[table.dataset.table];
+          if (!Array.isArray(saved)) return;
+
+          Array.from(table.querySelectorAll("colgroup col")).forEach((col, index) => {
+            if (saved[index]) col.style.width = saved[index];
+          });
+        });
+      } catch (e) {
+        console.warn("读取列宽保存失败", e);
+      }
+    }
+
+    function getColumnPercents(table) {
+      const cols = Array.from(table.querySelectorAll("colgroup col"));
+      const tableWidth = table.getBoundingClientRect().width || 1;
+      const firstRow = table.querySelector("tbody tr") || table.querySelector("thead tr");
+
+      return cols.map((col, index) => {
+        const rawWidth = (col.style.width || "").trim();
+
+        if (rawWidth.endsWith("%")) return parseFloat(rawWidth);
+        if (rawWidth.endsWith("px")) return parseFloat(rawWidth) / tableWidth * 100;
+
+        const rect = firstRow?.children[index]?.getBoundingClientRect();
+        return rect ? rect.width / tableWidth * 100 : 100 / cols.length;
+      });
+    }
+
+    function setColumnPercents(table, percents) {
+      const cols = Array.from(table.querySelectorAll("colgroup col"));
+      const total = percents.reduce((sum, value) => sum + value, 0) || 1;
+
+      cols.forEach((col, index) => {
+        col.style.width = `${(percents[index] / total * 100).toFixed(2)}%`;
+      });
+    }
+
+    function addRow(name) {
+      const tbody = tableByName(name).querySelector("tbody");
+      const row = tbody.querySelector("tr").cloneNode(true);
+
+      row.querySelectorAll("[contenteditable='true']").forEach(cell => {
+        cell.innerHTML = "";
+      });
+
+      tbody.appendChild(row);
+      saveData();
+      renderControls();
+    }
+
+    function removeRow(row) {
+      const tbody = row.parentElement;
+      const rows = Array.from(tbody.querySelectorAll("tr"));
+
+      if (rows.length <= 1) {
+        row.querySelectorAll("[contenteditable='true']").forEach(cell => {
+          cell.innerHTML = "";
+        });
+      } else {
+        row.remove();
+      }
+
+      saveData();
+      renderControls();
+    }
+
+    function renderRowDeleteButtons() {
+      document.querySelectorAll(".row-delete").forEach(btn => btn.remove());
+
+      document.querySelectorAll(".table-block").forEach(block => {
+        block.querySelectorAll("tbody tr").forEach(row => {
+          const btn = document.createElement("button");
+          btn.type = "button";
+          btn.className = "row-delete";
+          btn.textContent = "×";
+          btn.title = "删除这一行";
+          btn.__targetRow = row;
+          btn.addEventListener("click", () => removeRow(row));
+          block.appendChild(btn);
+        });
+      });
+    }
+
+    function renderColumnResizeHandles() {
+      document.querySelectorAll(".col-resize-handle").forEach(handle => handle.remove());
+
+      document.querySelectorAll(".table-block").forEach(block => {
+        const table = block.querySelector("table[data-table]");
+        if (!table) return;
+
+        const colCount = table.querySelectorAll("colgroup col").length;
+        if (colCount < 2) return;
+
+        for (let index = 0; index < colCount - 1; index++) {
+          const handle = document.createElement("div");
+          handle.className = "col-resize-handle";
+          handle.dataset.table = table.dataset.table;
+          handle.dataset.index = index;
+          handle.title = "拖动调整列宽";
+          handle.addEventListener("pointerdown", startResize);
+          block.appendChild(handle);
+        }
+      });
+    }
+
+    function positionRowDeleteButtons() {
+      document.querySelectorAll(".row-delete").forEach(btn => {
+        const row = btn.__targetRow;
+        const block = btn.closest(".table-block");
+        if (!row || !block) return;
+
+        const blockRect = block.getBoundingClientRect();
+        const rowRect = row.getBoundingClientRect();
+        btn.style.top = `${rowRect.top - blockRect.top + rowRect.height / 2 - 12.5}px`;
+      });
+    }
+
+    function positionColumnResizeHandles() {
+      document.querySelectorAll(".col-resize-handle").forEach(handle => {
+        const table = tableByName(handle.dataset.table);
+        const block = handle.closest(".table-block");
+        const index = Number(handle.dataset.index);
+        const firstBodyRow = table?.querySelector("tbody tr");
+
+        if (!table || !block || !firstBodyRow) return;
+
+        const cell = firstBodyRow.children[index];
+        if (!cell) return;
+
+        const blockRect = block.getBoundingClientRect();
+        const tableRect = table.getBoundingClientRect();
+        const cellRect = cell.getBoundingClientRect();
+
+        handle.style.left = `${cellRect.right - blockRect.left}px`;
+        handle.style.top = `${tableRect.top - blockRect.top}px`;
+        handle.style.height = `${tableRect.height}px`;
+      });
+    }
+
+    function positionControls() {
+      positionRowDeleteButtons();
+      positionColumnResizeHandles();
+    }
+
+    function renderControls() {
+      if (dragState) return;
+
+      renderRowDeleteButtons();
+      renderColumnResizeHandles();
+      requestAnimationFrame(positionControls);
+    }
+
+    function startResize(event) {
+      event.preventDefault();
+
+      const handle = event.currentTarget;
+      const table = tableByName(handle.dataset.table);
+      const block = handle.closest(".table-block");
+      const index = Number(handle.dataset.index);
+      if (!table || !block) return;
+
+      const tableRect = table.getBoundingClientRect();
+      const blockRect = block.getBoundingClientRect();
+      const percents = getColumnPercents(table);
+      const combined = percents[index] + percents[index + 1];
+
+      dragState = {
+        table,
+        block,
+        handle,
+        index,
+        startX: event.clientX,
+        latestX: event.clientX,
+        startPercents: percents,
+        tableWidth: tableRect.width || 1,
+        blockLeft: blockRect.left,
+        startHandleLeft: handle.getBoundingClientRect().left + 7 - blockRect.left,
+        minPercent: 4,
+        combined
+      };
+
+      handle.classList.add("active");
+      document.body.classList.add("resizing-columns");
+
+      if (handle.setPointerCapture) {
+        handle.setPointerCapture(event.pointerId);
+      }
+
+      handle.addEventListener("pointermove", onResizeMove);
+      handle.addEventListener("pointerup", stopResize);
+      handle.addEventListener("pointercancel", stopResize);
+    }
+
+    function onResizeMove(event) {
+      if (!dragState) return;
+      dragState.latestX = event.clientX;
+
+      if (!rafPending) {
+        rafPending = true;
+        requestAnimationFrame(applyResizeFromLatestPointer);
+      }
+    }
+
+    function applyResizeFromLatestPointer() {
+      rafPending = false;
+      if (!dragState) return;
+
+      const {
+        table,
+        handle,
+        index,
+        startX,
+        latestX,
+        startPercents,
+        tableWidth,
+        startHandleLeft,
+        minPercent,
+        combined
+      } = dragState;
+
+      let deltaPercent = (latestX - startX) / tableWidth * 100;
+      let left = startPercents[index] + deltaPercent;
+      let right = startPercents[index + 1] - deltaPercent;
+
+      if (left < minPercent) {
+        left = minPercent;
+        right = combined - minPercent;
+      }
+
+      if (right < minPercent) {
+        right = minPercent;
+        left = combined - minPercent;
+      }
+
+      const actualDeltaPercent = left - startPercents[index];
+      const next = startPercents.slice();
+      next[index] = left;
+      next[index + 1] = right;
+
+      setColumnPercents(table, next);
+
+      // 拖动中不读布局、不重建控件，只用缓存值移动当前拖拽线。
+      handle.style.left = `${startHandleLeft + actualDeltaPercent / 100 * tableWidth}px`;
+    }
+
+    function stopResize(event) {
+      if (!dragState) return;
+
+      applyResizeFromLatestPointer();
+
+      const handle = dragState.handle;
+      handle.classList.remove("active");
+      handle.removeEventListener("pointermove", onResizeMove);
+      handle.removeEventListener("pointerup", stopResize);
+      handle.removeEventListener("pointercancel", stopResize);
+
+      if (handle.releasePointerCapture && event?.pointerId !== undefined) {
+        try {
+          handle.releasePointerCapture(event.pointerId);
+        } catch (e) {}
+      }
+
+      dragState = null;
+      document.body.classList.remove("resizing-columns");
+
+      saveWidths();
+      renderControls();
+    }
+
+    function isDataRowEmpty(row) {
+      const editableCells = row.querySelectorAll("[contenteditable='true']");
+      return Array.from(editableCells).every(cell => cell.textContent.trim() === "");
+    }
+
+    function markEmptyRowsForPrint() {
+      document.querySelectorAll("tbody tr").forEach(row => {
+        row.classList.toggle("empty-print-row", isDataRowEmpty(row));
+      });
+    }
+
     function clearSavedData() {
-      if (!confirm("确定清空本机保存的填写内容吗？当前页面文字也会清空。")) return;
+      if (!confirm("确定清空本机保存的填写内容和手动列宽吗？当前页面也会清空。")) return;
+
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(WIDTH_KEY);
+
       getEditableElements().forEach(el => {
         if (el.querySelector(".box-label")) {
           const label = el.querySelector(".box-label").outerHTML;
@@ -687,15 +926,19 @@
           el.innerHTML = "";
         }
       });
-      autoFitAllTables();
+
+      location.reload();
     }
 
     function downloadCurrentHtml() {
       saveData();
+      saveWidths();
+
       const html = "<!doctype html>\n" + document.documentElement.outerHTML;
       const blob = new Blob([html], { type: "text/html;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
+
       a.href = url;
       a.download = "本科生个人小简历_已填写.html";
       document.body.appendChild(a);
@@ -707,22 +950,28 @@
     document.addEventListener("input", event => {
       if (event.target.matches("[contenteditable='true']")) {
         saveData();
-        autoFitAllTables();
+        requestAnimationFrame(renderControls);
       }
     });
 
-    window.addEventListener("resize", renderRowDeleteButtons);
+    window.addEventListener("resize", renderControls);
+
     window.addEventListener("beforeprint", () => {
       markEmptyRowsForPrint();
-      autoFitAllTables();
-    });
-    window.addEventListener("afterprint", () => {
-      document.querySelectorAll(".empty-print-row").forEach(row => row.classList.remove("empty-print-row"));
-      autoFitAllTables();
+      positionControls();
     });
 
+    window.addEventListener("afterprint", () => {
+      document.querySelectorAll(".empty-print-row").forEach(row => {
+        row.classList.remove("empty-print-row");
+      });
+      renderControls();
+    });
+
+    installResizeHandleStyle();
     loadData();
-    autoFitAllTables();
+    loadWidths();
+    requestAnimationFrame(renderControls);
   </script>
 </body>
 </html>
